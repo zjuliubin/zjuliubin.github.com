@@ -1,0 +1,18 @@
+---
+layout: default
+title: 所有文章
+---
+<ol class="archive">
+{% for post in site.posts %}
+  <li>
+    <div class="excerpt">
+      <strong class="entry-title">
+        <a href="{{ post.url }}" title="{{ post.title }}" rel="bookmark">{{ post.title }}</a>
+      </strong>
+      <span class="date small">
+        <abbr class="published" title="{{ post.date }}">{{ post.date | date_to_string }}</abbr>
+      </span>
+    </div>
+  </li>
+{% endfor %}
+</ol>

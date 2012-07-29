@@ -1,0 +1,7 @@
+url: http://zjuliubin.github.com
+
+author: liubin
+email: zjuliubin@gmail.com
+
+permalink: /:year/:month/:day/:title/
+paginate: 5
