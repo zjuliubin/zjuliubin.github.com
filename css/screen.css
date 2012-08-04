@@ -59,9 +59,6 @@ body {
 	color: #51555c;
 	font: 12px/18px helvetica, arial, sans-serif;
 }
-code {
-	font-family: "Lucida Console", Monaco, monospace;
-}
 *[lang] {
 	font-style: italic;
 }
@@ -81,7 +78,9 @@ acronym,
 .small-caps {
 	letter-spacing: 0.1em;
 }
-pre {
+pre, code {
+	font-family: Terminus, "Courier New", "Lucida Console", Monaco, monospace;
+	background-color: #001008;
 	overflow: auto;
 }
 textarea {
