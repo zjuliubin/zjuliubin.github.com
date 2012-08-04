@@ -24,7 +24,6 @@ a, abbr, acronym, address, big, cite, code,
 del, dfn, em, font, img, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
 b, u, i, center,
-dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 hr{
 	margin: 0;
@@ -158,10 +157,7 @@ h3,
 .h3 {
 	font-size: 14px;
 }
-p,
-dl,
-ul,
-ol {
+p {
 	margin-bottom:18px;
 }
 blockquote {
@@ -169,25 +165,11 @@ blockquote {
 	margin:0 9px 9px;
 	padding-left:10px;
 }
-ol {
-	margin-left:36px;
+
+dl, ul, dl {
+	padding-left:2em;
 }
-dd {
-	margin-left:18px;
-}
-li ul,
-li ol {
-	margin-bottom: 0;
-}
-li,
-dd,
-.tight {
-	margin-bottom:9px;
-}
-ul li {
-	list-style:none;
-	padding-left:12px;
-}
+
 acronym,
 .caps,
 .small {
