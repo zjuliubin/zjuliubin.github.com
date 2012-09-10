@@ -79,9 +79,13 @@ acronym,
 }
 pre, code {
 	font-family: Terminus, "Courier New", "Lucida Console", Monaco, monospace;
-	background-color: #001008;
+	background-color: #e8e8e8;
 	overflow: auto;
 }
+.src* {
+	background-color: #001008;
+}
+
 textarea {
 	font: 12px/18px helvetica, arial, sans-serif;
 	padding: 3px;
