@@ -1,0 +1,102 @@
+---
+layout: post
+title: Bash 中的 [[ ... ]] 测试
+---
+
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 Bash 中的 [ [ &hellip; ] ] 测试</a>
+<ul>
+<li><a href="#sec-1-1">1.1 与 [ ] 的区别</a></li>
+<li><a href="#sec-1-2">1.2 正则匹配</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">Bash 中的 [ [ &hellip; ] ] 测试</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<pre class="example">
+其实是 "Bash 中的 [[ ... ]] 测试" 的，但是在 org mode 中还没有找到 headline 中 "[[ ]]"
+export 之后不被处理为 link 的办法，所以中间加了空格。
+由于此原因，后面很多正文都会放在 #+BEGIN_EXAMPLE/#+END_EXAMPLE 中
+</pre>
+
+
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">与 [ ] 的区别</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+
+
+
+<pre class="example">1. [[ 是shell 关键字，而 [ 是 build-in command 两个有本质区别。
+2. Word splitting and pathname expansion are not performed on the words between the [[ and ]];
+   tilde expansion, parameter and variable expansion, arithmetic expansion, command substitution,
+   process substitution, and quote removal are performed.
+3. Conditional operators such as -f must be unquoted to be recognized as primaries.
+4. ==, !=, =~ 右边的字符串如被引用则进行字符串匹配，而不再是pattern match或正则匹配
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">正则匹配</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+有这么一个需求，查看某一个单词是否在一个字符串中：
+</p>
+<pre class="example">
+echo "$string" | grep '\&lt;test_word\&gt;'
+</pre>
+
+
+<p>
+这样应该就可以了。但用 [ [ 里的正则却不知道怎么输入：
+</p>
+<pre class="example">
+[[ "$string" =~ \&lt;test_word\&gt; ]]
+[[ "$string" =~ \\\&lt;test_word\\\&gt; ]]
+</pre>
+
+
+<p>
+这些都不行，调试发现：
+</p>
+<pre class="example">
+\&lt; 转义后是 &lt;，而 \\ 转义后还是 \\
+在bash本身的转义中不是这样的，只在 [[ ]] 中出现，是 [[ ]] 中解析的 bug ?
+PS: 如右边有 ' 或 "，将其引用起来，在匹配是还是使用的正则匹配，只是引用起来的部分的 ., * 等会在前加一个\进行转义，以将其变成原文匹配。
+</pre>
+
+
+<p>
+workaround:
+</p>
+<pre class="example">
+b='\&lt;'
+e='\&gt;'
+[[ "$string" =~ ${b}test_word${e} ]]
+</pre>
+
+
+</div>
+</div>
+</div>
