@@ -1,0 +1,60 @@
+---
+layout: post
+title: 编程语言中对负数求余
+---
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 编程语言中对负数求余</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">编程语言中对负数求余</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  《编程原本》中提到很多编程语言对负数求余处理不对，并指出正确的处理方法：
+</p>
+
+
+
+<pre class="example">a = quotient(a, b) * b + remainder(a, b)
+|remainder(a, b)| &lt; |b|
+remainder(a + b, b) = remainder(a - b, b) = remainder(a, b)
+</pre>
+
+
+<p>
+  如果 <code>(-7) % 5 = 3</code> 则是满足这个条件的。
+</p>
+<p>
+  我随便试了一下了下几个语言中 <code>(-7) % 5</code> 结果:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<colgroup><col class="left" /><col class="right" />
+</colgroup>
+<tbody>
+<tr><td class="left">c/c++</td><td class="right">-2</td></tr>
+<tr><td class="left">java</td><td class="right">-2</td></tr>
+<tr><td class="left">shell</td><td class="right">-2</td></tr>
+<tr><td class="left">awk</td><td class="right">-2</td></tr>
+<tr><td class="left">elisp</td><td class="right">-2</td></tr>
+<tr><td class="left">python</td><td class="right">3</td></tr>
+<tr><td class="left">ruby</td><td class="right">3</td></tr>
+</tbody>
+</table>
+
+
+<p>
+  <a href="http://en.wikipedia.org/wiki/Modulo_operation">Modulo<sub>operation</sub></a> 列了非常多的语言的处理方式，余数符号与除数一致的即是正确的。
+  可以看到，有些语言还提供了两种处理方式。
+</p>
+
+</div>
+</div>
