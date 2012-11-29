@@ -1,0 +1,276 @@
+---
+layout: post
+title: Show signal status in /proc/pid/status
+---
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 Show signal status in /proc/pid/status</a>
+<ul>
+<li><a href="#sec-1-1">1.1 org mode export c code as html error</a></li>
+<li><a href="#sec-1-2">1.2 blog 中 css 样式不对，src的背景与example的一样</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">Show signal status in /proc/pid/status</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  /proc/pid/status 中信号相关信息如：
+</p>
+
+
+
+<pre class="example">SigQ: 0/15951
+SigPnd:   0000000000000000
+ShdPnd:   0000000000000000
+SigBlk:   0000000000010000
+SigIgn:   0000000000384004
+SigCgt:   000000004b813efb
+</pre>
+
+
+<p>
+  含义如下：
+</p>
+
+
+
+<pre class="example">SigQ                        number of signals queued/max. number for queue
+SigPnd                      bitmap of pending signals for the thread
+ShdPnd                      bitmap of shared pending signals for the process
+SigBlk                      bitmap of blocked signals
+SigIgn                      bitmap of ignored signals
+SigCgt                      bitmap of catched signals
+</pre>
+
+
+<p>
+  其中 SigQ 比较直观，其它的都不大直观，是一个用16进制表示的64位的bitmap，生成方法： (from: <a href="http://forum.soft32.com/linux2/Signal-information-proc-status-ftopict13924.html">http://forum.soft32.com/linux2/Signal-information-proc-status-ftopict13924.html</a>)
+</p>
+
+
+
+<pre class="src src-cpp"><span style="color: #ff7f50;">char</span> * render_sigset_t(<span style="color: #ff7f50;">sigset_t</span> *<span style="color: #ffffff; font-weight: bold;">set</span>, <span style="color: #ff7f50;">char</span> *<span style="color: #ffffff; font-weight: bold;">buffer</span>) 
+{ 
+    <span style="color: #ff7f50;">int</span> <span style="color: #ffffff; font-weight: bold;">i</span> = _NSIG, <span style="color: #ffffff; font-weight: bold;">x</span>;  
+    <span style="color: #00ffff;">do</span> { 
+        i -= 4, x = 0;  
+        <span style="color: #00ffff;">if</span> (sigismember(set, i+1)) x |= 1;  
+        <span style="color: #00ffff;">if</span> (sigismember(set, i+2)) x |= 2;  
+        <span style="color: #00ffff;">if</span> (sigismember(set, i+3)) x |= 4;  
+        <span style="color: #00ffff;">if</span> (sigismember(set, i+4)) x |= 8;  
+        *buffer++ = (x &lt; 10 ? <span style="color: #ffff00;">'0'</span> : <span style="color: #ffff00;">'a'</span> - 10) + x;  
+    } <span style="color: #00ffff;">while</span> (i &gt;= 4); 
+    *buffer = 0;  
+    <span style="color: #00ffff;">return</span> buffer; 
+}
+</pre>
+
+
+<p>
+  写了个脚本 <code>sig_status.sh</code> ，以方便查看：
+</p>
+
+
+
+<pre class="src src-sh"><span style="color: #ff0000;">#</span><span style="color: #ff0000;">!/bin/</span><span style="color: #00ffff;">bash</span>
+
+<span style="color: #ff0000;"># </span><span style="color: #ff0000;">http://fcamel-life.blogspot.com/2012/02/procpidstatus-signal.html</span>
+<span style="color: #ff0000;"># </span><span style="color: #ff0000;">http://forum.soft32.com/linux2/Signal-information-proc-status-ftopict13924.html</span>
+
+binary()
+{
+    <span style="color: #ffffff; font-weight: bold;">BINARY_</span>=
+    <span style="color: #00ffff;">for</span> i<span style="color: #00ffff;"> in</span> {0..3} ;<span style="color: #00ffff;">do</span>
+        <span style="color: #00ffff;">if</span> (( (0x$<span style="color: #ffffff; font-weight: bold;">1</span> &gt;&gt; i) &amp; 0x1 ))  ; <span style="color: #00ffff;">then</span>
+            BINARY_+=1
+        <span style="color: #00ffff;">else</span>
+            BINARY_+=0
+        <span style="color: #00ffff;">fi</span>
+    <span style="color: #00ffff;">done</span>
+}
+
+bitmap()
+{
+    <span style="color: #ffffff; font-weight: bold;">BITMAP_</span>=
+    <span style="color: #00ffff;">for</span> d<span style="color: #00ffff;"> in</span> $(<span style="color: #fa8072;">echo</span> $<span style="color: #ffffff; font-weight: bold;">1</span> | sed <span style="color: #ffff00;">'s/./ &amp;/g'</span> | rev) ; <span style="color: #00ffff;">do</span>
+        binary $<span style="color: #ffffff; font-weight: bold;">d</span>
+        BITMAP_+=$<span style="color: #ffffff; font-weight: bold;">BINARY_</span>
+    <span style="color: #00ffff;">done</span>
+}
+
+usage()
+{
+    cat &lt;&lt;-EOF
+<span style="color: #ffff00; font-weight: bold;">    $0 pid</span>
+<span style="color: #ffff00; font-weight: bold;">    or</span>
+<span style="color: #ffff00; font-weight: bold;">    $0 -m sigmask (in /proc/pid/status)</span>
+<span style="color: #ffff00; font-weight: bold;">    EOF</span>
+    <span style="color: #00ffff;">exit</span> 1
+} &gt;&amp;2
+
+list_bitmap()
+{
+    bitmap $<span style="color: #ffffff; font-weight: bold;">1</span>
+    <span style="color: #ffaa00;">printf</span> <span style="color: #ffff00;">"%s\n"</span> $(<span style="color: #fa8072;">echo</span> $<span style="color: #ffffff; font-weight: bold;">BITMAP_</span> | sed <span style="color: #ffff00;">'s/./&amp; /g'</span>)
+}
+
+<span style="color: #ffffff; font-weight: bold;">map_flag</span>=0
+<span style="color: #00ffff;">while </span><span style="color: #ffaa00;">getopts</span> <span style="color: #ffff00;">"mh"</span> opt ; <span style="color: #00ffff;">do</span>
+    <span style="color: #00ffff;">case</span> $<span style="color: #ffffff; font-weight: bold;">opt</span><span style="color: #00ffff;"> in</span>
+        m ) <span style="color: #ffffff; font-weight: bold;">map_flag</span>=1 ;;
+        h | *) usage ;;
+    <span style="color: #00ffff;">esac</span>
+<span style="color: #00ffff;">done</span>
+
+<span style="color: #ffaa00;">shift</span> $((OPTIND-1))
+[ $# -eq 0 ] &amp;&amp; usage
+
+
+<span style="color: #00ffff;">if</span> ((map_flag)) ; <span style="color: #00ffff;">then</span>
+    list_bitmap $<span style="color: #ffffff; font-weight: bold;">1</span> | tr 0 <span style="color: #ffff00;">' '</span> | nl
+    <span style="color: #00ffff;">exit</span> 0
+<span style="color: #00ffff;">fi</span>
+
+<span style="color: #ffffff; font-weight: bold;">head</span>=SIG
+<span style="color: #ffffff; font-weight: bold;">cmd</span>=<span style="color: #ffff00;">"paste -d , &lt;(seq 1 64)"</span>
+<span style="color: #00ffff;">while</span> <span style="color: #ffffff; font-weight: bold;">IFS</span>=: read l r ; <span style="color: #00ffff;">do</span>
+    head+=,$<span style="color: #ffffff; font-weight: bold;">l</span>
+    cmd+=<span style="color: #ffff00;">" &lt;(list_bitmap $r | tr 0 ' ')"</span>
+<span style="color: #00ffff;">done</span> &lt;&lt;EOF
+<span style="color: #ffff00; font-weight: bold;">$(</span><span style="color: #fa8072;">sed</span><span style="color: #ffff00; font-weight: bold;"> -n '/SigPnd:/,/SigCgt:/p' /proc/$1/status)</span>
+<span style="color: #ffff00; font-weight: bold;">EOF</span>
+
+{
+<span style="color: #ffaa00;">echo</span> $<span style="color: #ffffff; font-weight: bold;">head</span>
+<span style="color: #ffaa00;">eval</span> $<span style="color: #ffffff; font-weight: bold;">cmd</span>
+} | column -t -s ,
+</pre>
+
+
+<p>
+  使用方式：
+</p>
+<p>
+  <code>./sig_status.sh -h</code>
+</p>
+<p>
+  <code>./sig_status.sh -m 000000004b813efb</code>
+</p>
+
+
+<pre class="example">   1  1
+   2  1
+   3   
+   4  1
+   5  1
+   6  1
+   7  1
+   8  1
+   9   
+  10  1
+  11  1
+  12  1
+  13  1
+  14  1
+  15   
+  16   
+  17  1
+  18   
+  19   
+  20   
+  21   
+  22   
+  23   
+  24  1
+  25  1
+  26  1
+  27   
+...
+</pre>
+
+
+<p>
+  <code>./sig_status.sh $$</code>
+</p>
+
+
+<pre class="example">SIG  SigPnd  ShdPnd  SigBlk  SigIgn  SigCgt
+1                                    1
+2                                    1
+3                            1        
+4                                    1
+5                                    1
+6                                    1
+7                                    1
+8                                    1
+9                                     
+10                                   1
+11                                   1
+12                                   1
+13                                   1
+14                                   1
+15                           1        
+16                                    
+17                   1               1
+18                                    
+19                                    
+20                           1        
+21                           1        
+22                           1        
+23                                    
+24                                   1
+25                                   1
+26                                   1
+</pre>
+
+
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="done DONE">DONE</span> org mode export c code as html error</h3>
+<div class="outline-text-3" id="text-1-1">
+
+<p>    <span class="timestamp-wrapper"><span class="timestamp-kwd">CLOSED: </span> <span class="timestamp">2012-11-29 Thu 10:32</span></span>  <span class="timestamp-wrapper"><span class="timestamp-kwd">DEADLINE: </span> <span class="timestamp">2012-12-07 Fri</span></span><br/>
+</p><ul>
+<li>CLOSING NOTE <span class="timestamp-wrapper"> <span class="timestamp">2012-11-29 Thu 10:32</span></span> <br/>
+     居然用cpp就可以了，情何以堪啊。
+     就这么的吧。
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="done DONE">DONE</span> blog 中 css 样式不对，src的背景与example的一样</h3>
+<div class="outline-text-3" id="text-1-2">
+
+<p>    <span class="timestamp-wrapper"><span class="timestamp-kwd">CLOSED: </span> <span class="timestamp">2012-11-29 Thu 10:34</span></span><br/>
+</p><ul>
+<li>CLOSING NOTE <span class="timestamp-wrapper"> <span class="timestamp">2012-11-29 Thu 10:34</span></span> <br/>
+     原来写的是 <code>.src*{</code> 这是不对的，对于
+<pre class="example">
+class="src src-sh"
+</pre>
+
+<p>     这种情况属于 多类选择器。
+     见：<a href="http://www.w3school.com.cn/css/css_selector_class.asp">http://www.w3school.com.cn/css/css_selector_class.asp</a>
+</p></li>
+</ul>
+
+</div>
+</div>
+</div>
