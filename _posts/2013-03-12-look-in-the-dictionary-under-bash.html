@@ -1,0 +1,81 @@
+---
+layout: post
+title: 直接在shell里查字典
+---
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 直接在shell里查字典</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">直接在shell里查字典</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  在 shell 里面查字典，可以用 sdcv, dict，一般不大好用。我用youdao的字典，可以：
+</p>
+<p>
+  <code>cat youdao-dict</code>
+</p>
+
+
+<pre class="src src-sh"><span style="color: #ff0000;">#</span><span style="color: #ff0000;">!/bin/</span><span style="color: #00ffff;">bash</span>
+
+curl -s <span style="color: #ffff00;">"http://dict.youdao.com/search?q=$*"</span> | sed -n <span style="color: #ffff00;">'/ id="results"/,/ id="bs"/p'</span> | w3m -T text/html -dump
+</pre>
+
+
+<p>
+  但每次都要输入命令名，也比较麻烦。我们可以更进一步，用 shell 里的命令不存在处理函数来查字典。
+  因为我们要查的单词一般是没有对应的命令的。将下面代码加入 <code>~/.bashrc</code> 即可：
+</p>
+
+
+
+<pre class="src src-sh"><span style="color: #4186be;">func_rename</span>()
+{
+    <span style="color: #ffaa00;">local</span> from to
+    <span style="color: #ffffff; font-weight: bold;">from</span>=$<span style="color: #ffffff; font-weight: bold;">1</span>
+    <span style="color: #ffffff; font-weight: bold;">to</span>=$<span style="color: #ffffff; font-weight: bold;">2</span>
+
+    <span style="color: #00ffff;">if ! </span><span style="color: #ffaa00;">declare</span> -f <span style="color: #ffff00;">"$from"</span> &gt;/dev/null ; <span style="color: #00ffff;">then</span>
+        <span style="color: #ffaa00;">echo</span> <span style="color: #ffff00;">"Function $from not exist!"</span>
+        <span style="color: #00ffff;">return</span> 1
+    <span style="color: #00ffff;">fi</span> &gt;&amp;2
+
+    <span style="color: #ffaa00;">source</span> &lt;(<span style="color: #ffaa00;">echo</span> <span style="color: #ffff00;">"</span>
+<span style="color: #ffff00;">    function $to()</span>
+<span style="color: #ffff00;">    $(</span><span style="color: #fa8072;">declare</span><span style="color: #ffff00;"> -f "</span>$<span style="color: #ffffff; font-weight: bold;">from</span><span style="color: #ffff00;">" | tail -n +2)</span>
+<span style="color: #ffff00;">    "</span>)
+    <span style="color: #00ffff;">return</span> 0
+}
+
+<span style="color: #ff0000;"># </span><span style="color: #ff0000;">Look up from dictionary with command_not_found_handle</span>
+func_rename command_not_found_handle command_not_found_handle_bak 2&gt;/dev/null &amp;&amp; {
+
+<span style="color: #4186be;">command_not_found_handle</span>()
+{
+    <span style="color: #ffaa00;">local</span> <span style="color: #ffffff; font-weight: bold;">not_found_display_size</span>=10
+    youdao-dict <span style="color: #ffff00;">"$1"</span> | head -n $((LINES - not_found_display_size))
+    <span style="color: #ffaa00;">echo</span>
+    <span style="color: #ffaa00;">echo</span> ============ END DICTIONARY AND BEGIN COMMAND NOT FOUND HANDLE ============
+    <span style="color: #ffaa00;">echo</span>
+    command_not_found_handle_bak <span style="color: #ffff00;">"$1"</span>
+}
+
+}
+</pre>
+
+
+<p>
+  将其中的 <code>youdao-dict</code> 换成自己的命令行工具即可。
+</p>
+</div>
+</div>
