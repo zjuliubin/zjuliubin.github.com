@@ -1,0 +1,81 @@
+---
+layout: post
+title: Awesome WM中"智能"地打开终端
+---
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 Awesome WM中"智能"地打开终端</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">Awesome WM中"智能"地打开终端</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  在Awesome WM中打开终端(terminal emulator)一般都绑定到 Win + Enter 上，打开多个终端非常方便。
+  但有些时候，我希望能够 "clone" 当前终端，即：在当前终端所在的目录中再打开一个终端(应该说是：打开一个终端并进到当前终端所在目录)。
+  在我的工作中，经常ssh到别的机器工作，所以我希望能够快速"clone"一个ssh到别的机器的终端。自然的，在awesome配置中，写了个小函数实现这个功能，
+  这里，我把它叫做 "智能" 地打开终端
+</p>
+
+
+
+<pre class="src src-lua"><span style="color: #00ffff;">function</span> myTrim(s)
+    <span style="color: #00ffff;">return</span> s:match <span style="color: #ffff00;">"^%s*(.-)%s*$"</span>
+<span style="color: #00ffff;">end</span>
+
+<span style="color: #00ffff;">function</span> smartOpenTerminal()
+    <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">f</span> = <span style="color: #ffaa00;">io</span>.<span style="color: #ffaa00;">popen</span>(<span style="color: #ffff00;">"bash -c 'xdotool getwindowname $(xdotool getwindowfocus)'"</span>)
+    <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">line</span> = myTrim(f:read())
+
+    <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">cmd</span> = <span style="color: #ffff00;">"x-terminal-emulator"</span>
+
+    <span style="color: #00ffff;">if</span> line <span style="color: #00ffff;">and</span> (<span style="color: #00ffff;">not</span> <span style="color: #ffaa00;">string</span>.<span style="color: #ffaa00;">find</span>(line, <span style="color: #ffff00;">'[(); ]'</span>)) <span style="color: #00ffff;">then</span>
+        <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">path</span> = line:gsub(<span style="color: #ffff00;">"~"</span>, <span style="color: #ffaa00;">os</span>.<span style="color: #ffaa00;">getenv</span>(<span style="color: #ffff00;">"HOME"</span>))
+        <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">user</span>,<span style="color: #ffffff; font-weight: bold;">host</span>,<span style="color: #ffffff; font-weight: bold;">remote_path</span> = <span style="color: #ffaa00;">string</span>.<span style="color: #ffaa00;">match</span>(line, <span style="color: #ffff00;">"(.*)@(.*):(.*)"</span>)
+        <span style="color: #00ffff;">local</span> <span style="color: #ffffff; font-weight: bold;">ff</span> = <span style="color: #ffaa00;">io</span>.<span style="color: #ffaa00;">open</span>(path)
+        <span style="color: #00ffff;">if</span> ff <span style="color: #00ffff;">then</span>
+            cmd = cmd .. <span style="color: #ffff00;">" -e bash -c 'cd "</span> .. line .. <span style="color: #ffff00;">"; bash'"</span>
+            ff:close()
+        <span style="color: #00ffff;">elseif</span> user <span style="color: #00ffff;">and</span> host <span style="color: #00ffff;">and</span> path <span style="color: #00ffff;">then</span>
+            cmd = cmd .. <span style="color: #ffff00;">" -e ssh -t -l "</span> .. user .. <span style="color: #ffff00;">" "</span> .. host .. <span style="color: #ffff00;">" 'cd "</span> .. remote_path .. <span style="color: #ffff00;">"; bash'"</span>
+        <span style="color: #00ffff;">end</span>
+    <span style="color: #00ffff;">end</span>
+
+    awful.util.spawn(cmd)
+    f:close()
+<span style="color: #00ffff;">end</span>
+</pre>
+
+
+<p>
+  其中 myTrim 来自：<a href="http://lua-users.org/wiki/StringTrim">http://lua-users.org/wiki/StringTrim</a> 。
+</p>
+<p>
+  工作方式如下：
+</p><ol>
+<li>通过 xdotool (需要安装) 获取当前 focus 窗口的标题
+</li>
+<li>如果标题是一个已存在的目录，则打开终端并进入到此目录
+</li>
+<li>如果标题是一个 <code>user@host:path</code> 这种形式的字符串，则认为是 ssh 到别的机器，则打开终端并ssh到此机器
+</li>
+<li>其它情况则打开终端就行了
+</li>
+</ol>
+
+
+<p>     
+  lua没写过，代码写得粗糙，活做得也不够细，个人用用可以将就。
+</p>
+<p>
+  PS: 我是将它函数绑定到 Win + Shift + Enter 上.
+</p></div>
+</div>
