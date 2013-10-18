@@ -1,0 +1,122 @@
+---
+layout: post
+title: URxvt 字符串补全插件
+---
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 URxvt 字符串补全插件</a>
+<ul>
+<li><a href="#sec-1-1">1.1 安装 &amp;&amp; 使用</a></li>
+<li><a href="#sec-1-2">1.2 SNAPSHOT</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">URxvt 字符串补全插件</h2>
+<div class="outline-text-2" id="text-1">
+
+
+<p>
+  Bash下有强大的bash-completion，常用的命令行工具都有自己的补全函数，使得bash中补全非常强大，我是它的重度依赖者。
+  但是Bash不能对terminal内显示的字符串进行补全，而这个功能常常是非常有用的。如有下面一个文件：
+</p>
+
+
+
+<pre class="example">Foo resource:
+http://xxx.yyy.com/path/foo.tar.gz
+ftp://fpt.down.yyy.com/path/foo.tar.gz
+</pre>
+
+
+<p>
+  里面记录了资源的url，可通过cat将它输出到屏幕上展示。此时，我想通过 wget 下载这个文件，应该怎么做呢？一个字母一个字母的输入？
+  不仅慢，还容易出错。一般的做法是选中复制，然后再粘贴。还是不够方便，并且通常要动用鼠标，麻烦。但如果你正好使用的时 URxvt，
+  你有福了，可以安装 <a href="https://github.com/muennich/urxvt-perls">https://github.com/muennich/urxvt-perls</a> 下的 url-select 和 keyboard-select 来进行快速的复制粘贴。
+  还可以通过本文件介绍的 URxvt补全插件(<a href="https://github.com/stdliu/urxvt-complete/">https://github.com/stdliu/urxvt-complete/</a>)用补全的方法，来输入整个 url。输入 ftp:
+  然后按 Alt-Tab或者 Alt-/ 即可补全整个url (如有多个候选，会弹出菜单，供选择)。类似于 vim 中的补全以及 emacs 中的 auto-complete。
+</p>
+<p>
+  <a href="https://github.com/stdliu/urxvt-complete/">urxvt-complete</a> 是URxvt的插件，所以不仅仅是在Bash下可工作，只要在URxvt下都可以补全。可以令nano等不支持补全的编译器也有了补全功能。
+</p>
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1">安装 &amp;&amp; 使用</h3>
+<div class="outline-text-3" id="text-1-1">
+
+
+<p>
+   下载：
+</p>
+
+
+
+<pre class="example">git clone https://github.com/stdliu/urxvt-complete.git /your/folder/
+</pre>
+
+
+<p>
+   在你的 .Xdefaults 或 .Xresources 中加入以下配置：
+</p>
+
+
+
+<pre class="example">URxvt.perl-lib: /your/folder/urxvt-complete
+URxvt.perl-ext-common: urxvt-complete
+URxvt.keysym.M-Tab: perl:urxvt-complete:activate
+! M-/
+URxvt.keysym.M-0x2f: perl:urxvt-complete:activate
+</pre>
+
+
+<p>
+   其中perl-lib是URxvt插件脚本目录，如有多个，则用 ':' 隔开。perl-ext-common是插件脚本名字，如有多个，用 ',' 隔开。
+   这里将启用命令绑定到了 Alt-/ 和 Alt-Tab 上，可自行修改。
+</p>
+<p>
+   重启 URxvt 安装完成。
+</p>
+<p>
+   按 Alt-/ 或 Alt-Tab 打开补全，如只有一个候选，则自动补全。如有多个，则弹出候选列表供选择，此时，有以下键可用：
+</p>
+<ul>
+<li>Ctrl-n, Alt-n, Up: 向上选择
+</li>
+<li>Ctrl-p, Alt-p, Down: 向下选择
+</li>
+<li>Tab: 如候选中有公共部分，则补全此部分；如只有一个候选，则选中它；其它情况下，向下选择
+</li>
+<li>Enter, Space: 选中
+</li>
+<li>Esc : 退出补全模式
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2">SNAPSHOT</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+   <img src="https://raw.github.com/stdliu/urxvt-complete/master/images/url_complete.png"  alt="https://raw.github.com/stdliu/urxvt-complete/master/images/url_complete.png" />
+</p>
+<p>
+   <img src="https://raw.github.com/stdliu/urxvt-complete/master/images/nano_complete.png"  alt="https://raw.github.com/stdliu/urxvt-complete/master/images/nano_complete.png" />
+</p>
+</div>
+</div>
+</div>
